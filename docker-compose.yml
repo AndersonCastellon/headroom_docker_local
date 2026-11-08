@@ -1,0 +1,29 @@
+services:
+  headroom:
+    image: ghcr.io/headroomlabs-ai/headroom:code
+    container_name: headroom-proxy
+    ports:
+      - "8787:8787"
+    volumes:
+      # Persistencia de la caché: evita reprocesar tokens si actualizas o reinicias el contenedor
+      - headroom_data:/data
+      - headroom_config:/root/.headroom
+    environment:
+      - HEADROOM_HOST=0.0.0.0
+      - HEADROOM_PORT=8787
+      - HEADROOM_MODE=cache
+      - HEADROOM_WORKSPACE_DIR=/data
+      # Apaga la telemetría para máxima privacidad de tus algoritmos de trading
+      - HEADROOM_TELEMETRY=off 
+    # Se reinicia automáticamente si falla o si reinicias tu máquina
+    restart: unless-stopped
+    # Healthcheck para asegurar que el proxy no se quede colgado "en silencio"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8787/dashboard"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  headroom_data:
+  headroom_config:
